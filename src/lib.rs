@@ -95,7 +95,6 @@ where
     }
 
     pub fn get_calibration(&mut self) -> Result<Date, KellerLDError<E>> {
-        self._check_connected()?;
         let date = self.get_pressure_mode()?;
         self.get_min_pressure()?;
         self.get_max_pressure()?;
@@ -190,12 +189,6 @@ where
         self.i2c.write(self.address, write)?;
         self.delay.delay_ms(READ_DELAY);
         self.i2c.read(self.address, read)?;
-        Ok(())
-    }
-
-    fn _check_connected(&mut self) -> Result<(), KellerLDError<E>> {
-        let mut buf = [0];
-        self.i2c.read(self.address, &mut buf)?;
         Ok(())
     }
 }
