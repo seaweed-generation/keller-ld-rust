@@ -10,3 +10,9 @@ defmt = "0.3"
 
 [dev-dependencies]
 embedded-hal-mock = "0.9.0"
+cortex-m-rt = "0.7"
+rp-pico = "0.8"
+rp2040-hal = { version = "0.9", features = ["eh1_0_alpha"] }
+fugit = "0.3.7"
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+defmt-rtt = "0.4"
