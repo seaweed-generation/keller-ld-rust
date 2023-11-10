@@ -2,7 +2,7 @@
 #![cfg_attr(not(test), no_std)]
 
 use defmt::{write, Format, Formatter};
-use embedded_hal::{delay::DelayUs, i2c::I2c};
+use embedded_hal::{delay::DelayUs, i2c::{I2c, Error}};
 
 pub type Celcius = f32;
 pub type Bar = f32;
@@ -22,9 +22,9 @@ pub struct KellerLD<I2C, D> {
     i2c: I2C,
     address: u8,
     delay: D,
-    pressure_mode: Option<PressureMode>,
-    max_pressure: Option<f32>,
-    min_pressure: Option<f32>,
+    pub pressure_mode: Option<PressureMode>,
+    pub max_pressure: Option<f32>,
+    pub min_pressure: Option<f32>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -37,8 +37,8 @@ pub enum KellerLDError<E> {
     ChecksumMismatch,
 }
 
-// Convert I2C errors
-impl<E> From<E> for KellerLDError<E> {
+// Convert I²C errors
+impl<E: Error> From<E> for KellerLDError<E> {
     fn from(e: E) -> Self {
         KellerLDError::Bus(e)
     }
@@ -55,6 +55,7 @@ impl Measurement {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Date {
     pub year: u16,
     pub month: u8,
@@ -82,6 +83,7 @@ impl<I2C, D, E> KellerLD<I2C, D>
 where
     I2C: I2c<Error = E>,
     D: DelayUs,
+    E: Error
 {
     pub fn new(i2c: I2C, address: u8, delay: D) -> Self {
         Self {
@@ -191,6 +193,13 @@ where
         self.i2c.read(self.address, read)?;
         Ok(())
     }
+
+    pub fn destroy(self) -> I2C {
+        // Destroy driver instance, return I²C bus instance.
+        self.i2c
+    }
+        
+
 }
 
 impl Format for Date {
