@@ -5,23 +5,11 @@ edition = "2021"
 
 [dependencies]
 
-embedded-hal = "1.0.0-rc.1"
+embedded-hal = "1.0.0-rc.2"
 defmt = "0.3"
-cortex-m-rt = { version = "0.7", optional = true}
-rp-pico = { version = "0.8", optional = true}
-rp2040-hal = { git = "https://github.com/rp-rs/rp-hal", features = ["eh1_0_alpha"], optional = true }
-fugit = { version = "0.3", optional = true}
-panic-probe = { version = "0.3", features = ["print-defmt"], optional = true }
-defmt-rtt = { version = "0.4", optional = true}
 
 [dev-dependencies]
-embedded-hal-mock = { version = "0.10.0-rc.1", features = ["eh1"] }
+embedded-hal-mock = { version = "0.10.0-rc.3", features = ["eh1"] }
 float_eq = "1.0"
+linux-embedded-hal = { git = "https://github.com/rust-embedded/linux-embedded-hal/" }
 
-
-[features]
-rp_pico = ["cortex-m-rt", "rp-pico", "rp2040-hal", "fugit", "panic-probe", "defmt-rtt"]
-
-[[example]]
-name = "rp_pico"
-required-features = ["rp_pico"]
