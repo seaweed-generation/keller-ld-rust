@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 #![cfg_attr(not(test), no_std)]
 
-use defmt::{write, Format, Formatter};
-use embedded_hal::{delay::DelayUs, i2c::{I2c, Error}};
+use core::fmt;
+use embedded_hal::{delay::DelayNs, i2c::{I2c, Error}};
 
 pub type Celcius = f32;
 pub type Bar = f32;
@@ -82,7 +82,7 @@ impl PressureMode {
 impl<I2C, D, E> KellerLD<I2C, D>
 where
     I2C: I2c<Error = E>,
-    D: DelayUs,
+    D: DelayNs,
     E: Error
 {
     pub fn new(i2c: I2C, address: u8, delay: D) -> Self {
@@ -202,8 +202,8 @@ where
 
 }
 
-impl Format for Date {
-    fn format(&self, fmt: Formatter) {
+impl fmt::Display for Date {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(fmt, "{:02}-{:02}-{}", self.day, self.month, self.year)
     }
 }
