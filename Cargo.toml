@@ -5,11 +5,13 @@ edition = "2021"
 
 [dependencies]
 
-embedded-hal = "1.0.0-rc.2"
+embedded-hal = "1.0.0-rc.3"
 defmt = "0.3"
 
 [dev-dependencies]
 embedded-hal-mock = { version = "0.10.0-rc.3", features = ["eh1"] }
 float_eq = "1.0"
-linux-embedded-hal = { git = "https://github.com/rust-embedded/linux-embedded-hal/" }
+linux-embedded-hal = { version = "0.4.0-alpha.3"}
 
+[patch.crates-io]
+linux-embedded-hal = { git = "https://github.com/rust-embedded/linux-embedded-hal/", rev="3c272a32875f093e9bf216080931062a08affd1f" }
