@@ -2,8 +2,9 @@
 #![cfg_attr(not(test), no_std)]
 
 use core::fmt;
+use thiserror_no_std::Error;
 use defmt::Format;
-use embedded_hal::{delay::DelayNs, i2c::{I2c, Error}};
+use embedded_hal::{delay::DelayNs, i2c::I2c};
 
 pub type Celcius = f32;
 pub type Bar = f32;
@@ -28,23 +29,28 @@ pub struct KellerLD<I2C, D> {
     pub min_pressure: Option<f32>,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum KellerLDError<E> {
+#[derive(Error, Debug)]
+pub enum KellerLDError {
+    #[error("internal error")]
     UnexpectedValue,
-    Bus(E),
+    #[error("I2C communication problem")]
+    Bus(embedded_hal::i2c::ErrorKind),
+    #[error("must get calibration info before use")]
     Uncalibrated,
+    #[error("wait for measurement")]
     Busy,
+    #[error("sensor is not in 'normal mode'")]
     IncorrectMode,
+    #[error("checksum mismatch")]
     ChecksumMismatch,
 }
 
 // Convert I²C errors
-impl<E: Error> From<E> for KellerLDError<E> {
+impl<E: embedded_hal::i2c::Error> From<E> for KellerLDError {
     fn from(e: E) -> Self {
-        KellerLDError::Bus(e)
+        KellerLDError::Bus(e.kind())
     }
 }
-
 pub struct Measurement {
     pub temperature: Celcius,
     pub pressure: Bar,
@@ -80,11 +86,10 @@ impl PressureMode {
     }
 }
 
-impl<I2C, D, E> KellerLD<I2C, D>
+impl<I2C, D> KellerLD<I2C, D>
 where
-    I2C: I2c<Error = E>,
+    I2C: I2c,
     D: DelayNs,
-    E: Error
 {
     pub fn new(i2c: I2C, address: u8, delay: D) -> Self {
         Self {
@@ -97,7 +102,7 @@ where
         }
     }
 
-    pub fn get_calibration(&mut self) -> Result<Date, KellerLDError<E>> {
+    pub fn get_calibration(&mut self) -> Result<Date, KellerLDError> {
         let date = self.get_pressure_mode()?;
         self.get_min_pressure()?;
         self.get_max_pressure()?;
@@ -105,7 +110,7 @@ where
         Ok(date)
     }
 
-    pub fn read(&mut self) -> Result<Measurement, KellerLDError<E>> {
+    pub fn read(&mut self) -> Result<Measurement, KellerLDError> {
         let mut data = [0; 5];
         self._read_write(&[REQUEST_MEASUREMENT], &mut data)?;
 
@@ -128,7 +133,7 @@ where
         })
     }
 
-    pub fn get_pressure_mode(&mut self) -> Result<Date, KellerLDError<E>> {
+    pub fn get_pressure_mode(&mut self) -> Result<Date, KellerLDError> {
         let mut data = [0; 3];
         self._read_write(&[REQUEST_PRESSURE_MODE], &mut data)?;
         let scaling_0 = u16::from_be_bytes(data[1..3].try_into().unwrap());
@@ -137,7 +142,7 @@ where
             0 => Ok(PressureMode::Vented),
             1 => Ok(PressureMode::Sealed),
             2 => Ok(PressureMode::Absolute),
-            _ => Err(KellerLDError::<E>::UnexpectedValue),
+            _ => Err(KellerLDError::UnexpectedValue),
         }?);
 
         Ok(Date {
@@ -147,7 +152,7 @@ where
         })
     }
 
-    pub fn get_min_pressure(&mut self) -> Result<(), KellerLDError<E>> {
+    pub fn get_min_pressure(&mut self) -> Result<(), KellerLDError> {
         let mut bytes = [0; 4];
 
         let mut data = [0; 3];
@@ -161,7 +166,7 @@ where
         Ok(())
     }
 
-    pub fn get_max_pressure(&mut self) -> Result<(), KellerLDError<E>> {
+    pub fn get_max_pressure(&mut self) -> Result<(), KellerLDError> {
         let mut bytes = [0; 4];
         let mut data = [0; 3];
         self._read_write(&[REQUEST_MAX_PRESSURE], &mut data)?;
@@ -174,7 +179,7 @@ where
         Ok(())
     }
 
-    fn _convert_pressure(&mut self, raw_pressure: u16) -> Result<Bar, KellerLDError<E>> {
+    fn _convert_pressure(&mut self, raw_pressure: u16) -> Result<Bar, KellerLDError> {
         if let (Some(mode), Some(min), Some(max)) =
             (self.pressure_mode, self.min_pressure, self.max_pressure)
         {
@@ -188,7 +193,7 @@ where
         ((raw_temperature >> 4) - 24) as f32 * 0.05 - 50.0
     }
 
-    fn _read_write(&mut self, write: &[u8], read: &mut [u8]) -> Result<(), KellerLDError<E>> {
+    fn _read_write(&mut self, write: &[u8], read: &mut [u8]) -> Result<(), KellerLDError> {
         self.i2c.write(self.address, write)?;
         self.delay.delay_ms(READ_DELAY);
         self.i2c.read(self.address, read)?;
