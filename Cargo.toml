@@ -7,6 +7,7 @@ edition = "2021"
 
 embedded-hal = "1.0.0-rc.3"
 defmt = "0.3"
+thiserror-no-std = "2.0.2"
 
 [dev-dependencies]
 embedded-hal-mock = { version = "0.10.0-rc.3", features = ["eh1"] }
