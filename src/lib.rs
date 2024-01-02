@@ -2,6 +2,7 @@
 #![cfg_attr(not(test), no_std)]
 
 use core::fmt;
+use defmt::Format;
 use embedded_hal::{delay::DelayNs, i2c::{I2c, Error}};
 
 pub type Celcius = f32;
@@ -55,7 +56,7 @@ impl Measurement {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Format)]
 pub struct Date {
     pub year: u16,
     pub month: u8,
@@ -199,7 +200,6 @@ where
         self.i2c
     }
         
-
 }
 
 impl fmt::Display for Date {
