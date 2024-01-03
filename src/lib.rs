@@ -29,7 +29,7 @@ pub struct KellerLD<I2C, D> {
     pub min_pressure: Option<f32>,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Format)]
 pub enum KellerLDError {
     #[error("internal error")]
     UnexpectedValue,
