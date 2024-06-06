@@ -204,7 +204,6 @@ where
         // Destroy driver instance, return I²C bus instance.
         self.i2c
     }
-        
 }
 
 impl fmt::Display for Date {
